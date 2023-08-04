@@ -47,9 +47,9 @@ BEGIN
 END
 
 EXEC [dbo].[USP_AddEditDeleteBulkCOAllowedStatus]
-    @employee_id = 8,
-    @ActionID = 2,
-    @department_id =8 ,
+    @employee_id = 1,
+    @ActionID = 1,
+    @department_id =1 ,
     @employee_name = 'market',
     @employee_address = 'mumbai',
     @salary = 100000.00;
@@ -108,5 +108,72 @@ WHERE salary BETWEEN (
     FROM employee
 );
 
+select * from employee;
+select * from department;
+drop table employee;
+
+DELETE FROM employee WHERE department_id IN (SELECT department_id FROM department);
 
 
+EXEC insert_into_department
+    @department_id = 1,
+    @department_name = 'hr';
+select * from department;
+drop table department;
+drop table employee;
+CREATE TABLE department (
+    department_id INT PRIMARY KEY,
+    department_name VARCHAR(50),
+    -- Add any other columns you need for the "department" table
+    -- For example, you can include columns for department description, location, etc.
+);
+
+CREATE TABLE employee (
+    employee_id INT PRIMARY KEY,
+    employee_name VARCHAR(50),
+    employee_address VARCHAR(100),
+    department_id INT,
+    salary DECIMAL(10, 2),
+    -- Add any other columns you need for the "employee" table
+    -- For example, you can include columns for date of birth, hire date, etc.
+
+    -- Adding the FOREIGN KEY CONSTRAINT directly in the CREATE TABLE statement:
+    CONSTRAINT FK_Employee_Department
+    FOREIGN KEY (department_id) REFERENCES department (department_id)
+);
+
+
+-- Create a stored procedure to insert data into both "employee" and "department" tables
+CREATE PROCEDURE usp_InsertEmployeeAndDepartment
+    @employee_id INT,
+    @employee_name VARCHAR(50),
+    @employee_address VARCHAR(100),
+    @department_id INT,
+    @salary DECIMAL(10, 2),
+    @department_name VARCHAR(50)
+AS
+BEGIN
+    -- Check if the department exists in the "department" table
+    IF NOT EXISTS (SELECT 1 FROM department WHERE department_id = @department_id)
+    BEGIN
+        -- Insert the department into the "department" table
+        INSERT INTO department (department_id, department_name)
+        VALUES (@department_id, @department_name);
+    END
+
+    -- Insert the employee into the "employee" table
+    INSERT INTO employee (employee_id, employee_name, employee_address, department_id, salary)
+    VALUES (@employee_id, @employee_name, @employee_address, @department_id, @salary);
+END
+
+EXEC usp_InsertEmployeeAndDepartment
+    @employee_id = 3,
+    @employee_name = 'saloni shahi',
+    @employee_address = '123 Main St',
+    @department_id = 101,
+    @salary = 50000.00,
+    @department_name = 'sales';
+
+	ALTER TABLE employee
+ADD CONSTRAINT FK_Employee_Department
+FOREIGN KEY (department_id) REFERENCES department(department_id);
